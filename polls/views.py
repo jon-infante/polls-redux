@@ -8,10 +8,30 @@ from django.views import generic
 from django.http import HttpResponse, HttpResponseRedirect
 
 from .models import Choice, Question
-from .forms import QuestionCreateForm
+
+from .forms import QuestionCreateForm, ChoiceCreateForm
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 
+class QuestionCreateView(LoginRequiredMixin, generic.edit.CreateView):
+    login_url = reverse_lazy('login')
+    def get(self, request, *args, **kwargs):
+        context = {
+          'form': QuestionCreateForm()
+        }
+        return render(request, 'polls/create.html', context)
+
+    def post(self, request, *args, **kwargs):
+        form = QuestionCreateForm(request.POST)
+        if form.is_valid:
+            question = form.save(commit=False) # don't save the question yet
+            question.author = request.user
+            question.save()
+            return HttpResponseRedirect(
+                reverse('polls:detail', args=[question.id]))
+        # else if form is not valid
+        return render(request, 'polls/create.html', { 'form': form })
 
 class IndexView(generic.ListView):
     template_name = 'polls/index.html'
@@ -83,24 +103,3 @@ def vote(request, question_id):
         # with POST data. This prevents data from being posted twice if a
         # user hits the Back button.
         return HttpResponseRedirect(reverse('polls:results', args=(question.id,)))
-
-
-class QuestionCreateView(LoginRequiredMixin, generic.edit.CreateView):
-    login_url = reverse_lazy('login')
-
-    def get(self, request, *args, **kwargs):
-        context = {
-          'form': QuestionCreateForm()
-        }
-        return render(request, 'polls/create.html', context)
-
-    def post(self, request, *args, **kwargs):
-        form = QuestionCreateForm(request.POST)
-        if form.is_valid:
-            question = form.save(commit=False) # don't save the question yet
-            question.author = request.user
-            question.save()
-            return HttpResponseRedirect(
-                reverse('polls:detail', args=[question.id]))
-        # else if form is not valid
-        return render(request, 'polls/create.html', { 'form': form })

@@ -7,7 +7,6 @@ class QuestionCreateForm(forms.ModelForm):
         model = Question
         fields = ['question_text', 'pub_date']
 
-
 class ChoiceCreateForm(forms.ModelForm):
     class Meta:
         model = Choice
